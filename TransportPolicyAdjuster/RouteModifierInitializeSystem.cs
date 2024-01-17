@@ -70,6 +70,13 @@ namespace TransportPolicyAdjuster
                 m_RouteModifierData = system.GetBufferLookup<RouteModifierData>(isReadOnly: true);
             }
 
+            public RouteModifierRefreshData(Game.Policies.RouteModifierInitializeSystem.RouteModifierRefreshData data)
+            {
+                m_PolicySliderData = data.m_PolicySliderData;
+                m_RouteOptionData = data.m_RouteOptionData;
+                m_RouteModifierData = data.m_RouteModifierData;
+            }
+
             public void Update(SystemBase system)
             {
                 m_PolicySliderData.Update(system);
@@ -150,7 +157,7 @@ namespace TransportPolicyAdjuster
         [HarmonyPrefix]
         public static bool OnUpdate(ref Game.Policies.RouteModifierInitializeSystem __instance)
         {
-            var m_RouteModifierRefreshData = __instance.GetMemberValue<RouteModifierRefreshData>("m_RouteModifierRefreshData");
+            var m_RouteModifierRefreshData = __instance.GetMemberValue<Game.Policies.RouteModifierInitializeSystem.RouteModifierRefreshData>("m_RouteModifierRefreshData");
             m_RouteModifierRefreshData.Update(__instance);
             var typeHandle = __instance.GetMemberValue<object>("__TypeHandle");
             var __Game_Routes_RouteModifier_RW_BufferTypeHandle = typeHandle.GetMemberValue<BufferTypeHandle<RouteModifier>>("__Game_Routes_RouteModifier_RW_BufferTypeHandle");
@@ -161,7 +168,7 @@ namespace TransportPolicyAdjuster
             __Game_Policies_Policy_RO_BufferTypeHandle.Update(ref __instance.CheckedStateRef);
             InitializeRouteModifiersJob initializeRouteModifiersJob = new()
             {
-                m_RouteModifierRefreshData = m_RouteModifierRefreshData,
+                m_RouteModifierRefreshData = new RouteModifierRefreshData(m_RouteModifierRefreshData),
                 m_PolicyType = __Game_Policies_Policy_RO_BufferTypeHandle,
                 m_RouteType = __Game_Routes_Route_RW_ComponentTypeHandle,
                 m_RouteModifierType = __Game_Routes_RouteModifier_RW_BufferTypeHandle

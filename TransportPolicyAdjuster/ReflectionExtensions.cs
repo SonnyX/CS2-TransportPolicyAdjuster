@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 
 namespace TransportPolicyAdjuster
 {
@@ -14,18 +15,25 @@ namespace TransportPolicyAdjuster
         public static T GetMemberValue<T>(this object obj, string memberName)
         {
             var memInf = GetMemberInfo(obj, memberName);
-
-            if (memInf is PropertyInfo)
+            object value = null;
+            try
             {
-                return (T)memInf.As<PropertyInfo>().GetValue(obj, null);
+                if (memInf is PropertyInfo)
+                {
+                    value = memInf.As<PropertyInfo>().GetValue(obj, null);
+                    return (T)value;
+                }
+                else if (memInf is FieldInfo)
+                {
+                    value = memInf.As<FieldInfo>().GetValue(obj);
+                    return (T)value;
+                }
+                throw new Exception($"{nameof(ReflectionExtensions)}: Couldn't find member name: {memberName}!");
             }
-
-            if (memInf is FieldInfo)
+            catch(InvalidCastException ex)
             {
-                return (T) memInf.As<FieldInfo>().GetValue(obj);
+                throw new Exception($"Cannot cast {value.GetType().FullName} to {typeof(T).GetType().FullName}");
             }
-
-            throw new System.Exception($"{nameof(ReflectionExtensions)}: Couldn't find member name: {memberName}!");
         }
 
         /// <summary>
@@ -36,11 +44,11 @@ namespace TransportPolicyAdjuster
         /// <param name="newValue">New value to be set.</param>
         /// <returns>Returns old value.</returns>
         /// <exception cref="System.Exception">Exception thrown if member name is not found on object.</exception>
-        public static object SetMemberValue(this object obj, string memberName, object newValue)
+        public static T SetMemberValue<T>(this object obj, string memberName, T newValue)
         {
             var memInf = GetMemberInfo(obj, memberName);
 
-            var oldValue = obj.GetMemberValue<object>(memberName);
+            var oldValue = obj.GetMemberValue<T>(memberName);
             if (memInf is PropertyInfo)
             {
                 memInf.As<PropertyInfo>().SetValue(obj, newValue, null);
@@ -48,10 +56,6 @@ namespace TransportPolicyAdjuster
             else if (memInf is FieldInfo)
             {
                 memInf.As<FieldInfo>().SetValue(obj, newValue);
-            }
-            else
-            {
-                throw new System.Exception($"{nameof(ReflectionExtensions)}: Couldn't find member name {memberName}! ");
             }
 
             return oldValue;

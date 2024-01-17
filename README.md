@@ -1,5 +1,5 @@
 # TransportPolicyAdjuster
-A mod that changes the range of the assigned vehicles slider from 50%-200% to 0%-400% with increments of 10%.
+A mod that changes the range of the assigned vehicles slider from 50%-200% to 1-30 assigned vehicles.
 
 **Disclaimer: I am not responsible for any damage to your game, computer, saves and/or mental health; use at your own risk.**
 

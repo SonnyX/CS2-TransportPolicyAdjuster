@@ -1,7 +1,10 @@
+using Colossal.UI.Binding;
 using Game.Pathfind;
 using Game.Prefabs;
 using Game.Routes;
+using Game.UI.InGame;
 using HarmonyLib;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Unity.Burst;
 using Unity.Collections;
@@ -79,48 +82,18 @@ namespace TransportPolicyAdjuster
                     {
                         continue;
                     }
-                    int minVehicles = 0;
-
-                    // defaultVehicleInterval = 45
-                    // lineDuration = 621.4173
-                    // VehicleInterval >= 1
-                    // VehicleInterval = (defaultVehicleInterval + defaultVehicleInterval * delta)
-                    // Min vehicles = 1
-                    // V = L / (I + I * D);
-                    // vehicleCount = lineDuration / (defaultVehicleInterval + defaultVehicleInterval * delta);
-                    // delta = lineDuration / (defaultVehicleInterval * vehicleCount) - 1
-
-                    // 50 = 1f; 0.5
-                    // 100 = 0.5; 1/1.5 = 0.6666666
-                    // 150 = 0; 1/1 = error
-                    // 200 = -0.5; 1 / 0.5 = 2
-
 
                     ref NativeList<float2> countResults = ref m_CountResults;
-                    float policyAdjustment = 0; // starts at 50, max is 200, step is 10
-                    for (; policyAdjustment <= sliderData.m_Range.max * 2; policyAdjustment += sliderData.m_Step)
+                    for (int desiredVehicles = 1; desiredVehicles <= 30; desiredVehicles++)
                     {
-                        float calculateForVehicleInterval = ApplyModifier(defaultVehicleInterval, policyAdjustment, sliderData, routeModifier);
-                        int vehicleCount = CalculateVehicleCount(calculateForVehicleInterval, lineDuration);
-                        if (vehicleCount > minVehicles)
-                        {
-                            float2 value2 = new float2(policyAdjustment, vehicleCount);
-                            countResults.Add(in value2);
-                            minVehicles = vehicleCount;
-                        }
+                        var delta = 100f / (lineDuration / (defaultVehicleInterval * desiredVehicles));
+                        float2 value2 = new float2(desiredVehicles * sliderData.m_Step, delta);
+                        countResults.Add(in value2);
                     }
                 }
 
                 m_IntResults[0] = CalculateVehicleCount(vehicleInterval, lineDuration);
                 m_IntResults[1] = activeVehicles.Length;
-            }
-
-            private float ApplyModifier(float interval, float policyAdjustment, PolicySliderData sliderData, RouteModifierData modifierData)
-            {
-                float sliderPercentage = (policyAdjustment - sliderData.m_Range.min) / (sliderData.m_Range.max - sliderData.m_Range.min);
-                float num = math.lerp(modifierData.m_Range.min, modifierData.m_Range.max, sliderPercentage);
-                num = 1f / math.max(0.001f, 1f + num) - 1f;
-                return interval + interval * num;
             }
 
             private int CalculateVehicleCount(float vehicleInterval, float lineDuration)
@@ -173,13 +146,57 @@ namespace TransportPolicyAdjuster
             return false;
         }
 
+        [HarmonyPatch(typeof(Game.UI.InGame.VehicleCountSection), nameof(OnSetVehicleCount))]
+        [HarmonyPrefix]
+        public static bool OnSetVehicleCount(float newVehicleCount, ref Game.UI.InGame.VehicleCountSection __instance)
+        {
+            var m_PoliciesUISystem = __instance.GetMemberValue<PoliciesUISystem>("m_PoliciesUISystem");
+            var selectedEntity = __instance.GetMemberValue<Entity>("selectedEntity");
+            var m_VehicleCountPolicy = __instance.GetMemberValue<Entity>("m_VehicleCountPolicy");
+            var m_CountResult = __instance.GetMemberValue<NativeList<float2>>("m_CountResult");
+            float2? delta = null;
+            for (int i = 0; i < m_CountResult.Length; i++)
+            {
+                if (m_CountResult[i].x == newVehicleCount)
+                {
+                    delta = m_CountResult[i];
+                    break;
+                }
+            }
+            if (!delta.HasValue) {
+                throw new System.Exception($"TransportPolicyAdjuster: m_CountResult does not contain index {newVehicleCount}");
+            }
+            m_PoliciesUISystem.SetPolicy(selectedEntity, m_VehicleCountPolicy, active: true, delta.Value.y);
+            return false;
+        }
+
+        [HarmonyPatch(typeof(Game.UI.InGame.VehicleCountSection), nameof(OnWriteProperties))]
+        [HarmonyPrefix]
+        public static bool OnWriteProperties(ref IJsonWriter writer, ref Game.UI.InGame.VehicleCountSection __instance)
+        {
+            writer.PropertyName("vehicleCount");
+            writer.Write(__instance.GetMemberValue<int>("vehicleCount"));
+            writer.PropertyName("activeVehicles");
+            writer.Write(__instance.GetMemberValue<int>("activeVehicles"));
+            writer.PropertyName("vehicleCounts");
+
+            var max_vehicles = 30;
+            writer.ArrayBegin(max_vehicles);
+            for (int i = 1; i <= max_vehicles; i++)
+            {
+                writer.Write(new float2(i * 10, i));
+            }
+
+            writer.ArrayEnd();
+            return false;
+        }
+
         [HarmonyPatch(typeof(Game.UI.InGame.VehicleCountSection), nameof(OnUpdate))]
         [HarmonyPrefix]
         public static bool OnUpdate(ref Game.UI.InGame.VehicleCountSection __instance)
         {
-            object instance = __instance;
-            instance.SetMemberValue("visible", Visible(__instance));
-            var typeHandle = instance.GetMemberValue<object>("__TypeHandle");
+            __instance.SetMemberValue("visible", Visible(__instance));
+            var typeHandle = __instance.GetMemberValue<object>("__TypeHandle");
             if (__instance.visible)
             {
                 var __Game_Prefabs_RouteModifierData_RO_BufferLookup = typeHandle.GetMemberValue<BufferLookup<RouteModifierData>>("__Game_Prefabs_RouteModifierData_RO_BufferLookup");
@@ -211,9 +228,9 @@ namespace TransportPolicyAdjuster
 
                 CalculateVehicleCountJob jobData = new()
                 {
-                    m_SelectedEntity = instance.GetMemberValue<Entity>("selectedEntity"),
-                    m_SelectedPrefab = instance.GetMemberValue<Entity>("selectedPrefab"),
-                    m_VehicleCountPolicy = instance.GetMemberValue<Entity>("m_VehicleCountPolicy"),
+                    m_SelectedEntity = __instance.GetMemberValue<Entity>("selectedEntity"),
+                    m_SelectedPrefab = __instance.GetMemberValue<Entity>("selectedPrefab"),
+                    m_VehicleCountPolicy = __instance.GetMemberValue<Entity>("m_VehicleCountPolicy"),
                     m_TransportLineDatas = __Game_Prefabs_TransportLineData_RO_ComponentLookup,
                     m_PolicySliderDatas = __Game_Prefabs_PolicySliderData_RO_ComponentLookup,
                     m_VehicleTimings = __Game_Routes_VehicleTiming_RO_ComponentLookup,
@@ -223,10 +240,10 @@ namespace TransportPolicyAdjuster
                     m_RouteSegments = __Game_Routes_RouteSegment_RO_BufferLookup,
                     m_RouteModifiers = __Game_Routes_RouteModifier_RO_BufferLookup,
                     m_RouteModifierDatas = __Game_Prefabs_RouteModifierData_RO_BufferLookup,
-                    m_IntResults = instance.GetMemberValue<NativeArray<int>>("m_IntResults"),
-                    m_CountResults = instance.GetMemberValue<NativeList<float2>>("m_CountResult")
+                    m_IntResults = __instance.GetMemberValue<NativeArray<int>>("m_IntResults"),
+                    m_CountResults = __instance.GetMemberValue<NativeList<float2>>("m_CountResult")
                 };
-                IJobExtensions.Schedule(jobData, instance.GetMemberValue<JobHandle>("Dependency")).Complete();
+                IJobExtensions.Schedule(jobData, __instance.GetMemberValue<JobHandle>("Dependency")).Complete();
             }
             return false;
         }
