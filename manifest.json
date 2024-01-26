@@ -1,7 +1,7 @@
 {
     "name": "TransportPolicyAdjuster",
-    "description": "A mod that changes the range of the assigned vehicles slider from 50%-200% to 1-30 assigned vehicles.",
-    "version_number": "1.1.0",
+    "description": "A mod that changes the range of the assigned vehicles slider from 50%-200% to 1-50 assigned vehicles.",
+    "version_number": "1.2.0",
     "dependencies": [
         "BepInEx-BepInExPack-5.4.2100"
     ],

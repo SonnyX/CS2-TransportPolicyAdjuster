@@ -4,7 +4,6 @@ using Game.Prefabs;
 using Game.Routes;
 using Game.UI.InGame;
 using HarmonyLib;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using Unity.Burst;
 using Unity.Collections;
@@ -84,7 +83,7 @@ namespace TransportPolicyAdjuster
                     }
 
                     ref NativeList<float2> countResults = ref m_CountResults;
-                    for (int desiredVehicles = 1; desiredVehicles <= 30; desiredVehicles++)
+                    for (int desiredVehicles = 1; desiredVehicles <= 50; desiredVehicles++)
                     {
                         var delta = 100f / (lineDuration / (defaultVehicleInterval * desiredVehicles));
                         float2 value2 = new float2(desiredVehicles * sliderData.m_Step, delta);
@@ -180,7 +179,7 @@ namespace TransportPolicyAdjuster
             writer.Write(__instance.GetMemberValue<int>("activeVehicles"));
             writer.PropertyName("vehicleCounts");
 
-            var max_vehicles = 30;
+            var max_vehicles = 50;
             writer.ArrayBegin(max_vehicles);
             for (int i = 1; i <= max_vehicles; i++)
             {

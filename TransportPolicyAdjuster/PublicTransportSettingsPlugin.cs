@@ -2,6 +2,8 @@
 using Game.Common;
 using Game;
 using HarmonyLib;
+using Unity.Burst;
+using UnityEngine;
 
 namespace TransportPolicyAdjuster
 {
@@ -13,6 +15,13 @@ namespace TransportPolicyAdjuster
         {
             Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
 
+            var loadDll = SystemInfo.operatingSystemFamily switch {
+                OperatingSystemFamily.MacOSX => "TransportPolicyAdjuster_mac_x86_64.bundle",
+                OperatingSystemFamily.Windows => "TransportPolicyAdjuster_win_x86_64.dll",
+                OperatingSystemFamily.Linux => "TransportPolicyAdjuster_linux_x86_64.so",
+                _ => throw new System.NotImplementedException(),
+            };
+            BurstRuntime.LoadAdditionalLibrary(loadDll);
             Harmony.CreateAndPatchAll(typeof(PublicTransportSettingsPlugin).Assembly, MyPluginInfo.PLUGIN_GUID);
         }
 

@@ -22,7 +22,7 @@ using PolicyRange = Game.Policies.ModifiedSystem.PolicyRange;
 
 namespace TransportPolicyAdjuster
 {
-    public class ModifiedSystem : GameSystemBase
+    public partial class ModifiedSystem : GameSystemBase
     {
         [BurstCompile]
         private struct ModifyPolicyJob : IJobChunk

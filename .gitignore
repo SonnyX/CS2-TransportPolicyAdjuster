@@ -477,3 +477,7 @@ $RECYCLE.BIN/
 *.lnk
 
 Managed/
+
+# CS2 mod ignores
+*/Library/*.pid
+*/Logs
