@@ -26,7 +26,7 @@ namespace TransportPolicyAdjuster
             public Entity m_SelectedPrefab;
 
             [ReadOnly]
-            public Entity m_VehicleCountPolicy;
+            public Entity m_Policy;
 
             [ReadOnly]
             public ComponentLookup<VehicleTiming> m_VehicleTimings;
@@ -64,8 +64,8 @@ namespace TransportPolicyAdjuster
                 TransportLineData transportLineData = m_TransportLineDatas[m_SelectedPrefab];
                 DynamicBuffer<RouteVehicle> activeVehicles = m_RouteVehicles[m_SelectedEntity];
                 DynamicBuffer<RouteModifier> modifiers = m_RouteModifiers[m_SelectedEntity];
-                DynamicBuffer<RouteModifierData> routeModifiers = m_RouteModifierDatas[m_VehicleCountPolicy];
-                PolicySliderData sliderData = m_PolicySliderDatas[m_VehicleCountPolicy];
+                DynamicBuffer<RouteModifierData> routeModifiers = m_RouteModifierDatas[m_Policy];
+                PolicySliderData sliderData = m_PolicySliderDatas[m_Policy];
 
                 float defaultVehicleInterval = transportLineData.m_DefaultVehicleInterval;
                 float vehicleInterval = defaultVehicleInterval;
@@ -162,7 +162,8 @@ namespace TransportPolicyAdjuster
                     break;
                 }
             }
-            if (!delta.HasValue) {
+            if (!delta.HasValue)
+            {
                 throw new System.Exception($"TransportPolicyAdjuster: m_CountResult does not contain index {newVehicleCount}");
             }
             m_PoliciesUISystem.SetPolicy(selectedEntity, m_VehicleCountPolicy, active: true, delta.Value.y);
@@ -229,7 +230,7 @@ namespace TransportPolicyAdjuster
                 {
                     m_SelectedEntity = __instance.GetMemberValue<Entity>("selectedEntity"),
                     m_SelectedPrefab = __instance.GetMemberValue<Entity>("selectedPrefab"),
-                    m_VehicleCountPolicy = __instance.GetMemberValue<Entity>("m_VehicleCountPolicy"),
+                    m_Policy = __instance.GetMemberValue<Entity>("m_VehicleCountPolicy"),
                     m_TransportLineDatas = __Game_Prefabs_TransportLineData_RO_ComponentLookup,
                     m_PolicySliderDatas = __Game_Prefabs_PolicySliderData_RO_ComponentLookup,
                     m_VehicleTimings = __Game_Routes_VehicleTiming_RO_ComponentLookup,
