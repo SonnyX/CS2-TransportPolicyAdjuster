@@ -7,20 +7,16 @@ using System.Collections.Generic;
 namespace TransportPolicyAdjuster
 {
     [FileLocation(nameof(TransportPolicyAdjuster))]
-    [SettingsUIGroupOrder(kSliderGroup)]
-    [SettingsUIShowGroupName(kSliderGroup)]
     public class Setting : ModSetting
     {
         public const string kSection = "Main";
-
-        public const string kSliderGroup = "Slider";
 
         public Setting(IMod mod) : base(mod)
         {
         }
 
         [SettingsUISlider(min = 10, max = 1000, step = 10, scalarMultiplier = 1, unit = "vehicles")]
-        [SettingsUISection(kSection, kSliderGroup)]
+        [SettingsUISection(kSection)]
         public int MaxVehicleCount { get; set; } = 50;
 
         public override void SetDefaults()
@@ -45,8 +41,6 @@ namespace TransportPolicyAdjuster
             {
                 { m_Setting.GetSettingsLocaleID(), "Transport Policy Adjuster" },
                 { m_Setting.GetOptionTabLocaleID(Setting.kSection), "Main" },
-
-                { m_Setting.GetOptionGroupLocaleID(Setting.kSliderGroup), "Sliders" },
 
 
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.MaxVehicleCount)), "Maximum Vehicle Count" },
