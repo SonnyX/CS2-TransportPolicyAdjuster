@@ -1,7 +1,9 @@
-﻿using Game.Policies;
+﻿using Colossal.Logging;
+using Game.Policies;
 using Game.Prefabs;
 using Game.Routes;
 using HarmonyLib;
+using System;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
@@ -157,26 +159,34 @@ namespace TransportPolicyAdjuster
         [HarmonyPrefix]
         public static bool OnUpdate(ref Game.Policies.RouteModifierInitializeSystem __instance)
         {
-            var m_RouteModifierRefreshData = __instance.GetMemberValue<Game.Policies.RouteModifierInitializeSystem.RouteModifierRefreshData>("m_RouteModifierRefreshData");
-            m_RouteModifierRefreshData.Update(__instance);
-            var typeHandle = __instance.GetMemberValue<object>("__TypeHandle");
-            var __Game_Routes_RouteModifier_RW_BufferTypeHandle = typeHandle.GetMemberValue<BufferTypeHandle<RouteModifier>>("__Game_Routes_RouteModifier_RW_BufferTypeHandle");
-            __Game_Routes_RouteModifier_RW_BufferTypeHandle.Update(ref __instance.CheckedStateRef);
-            var __Game_Routes_Route_RW_ComponentTypeHandle = typeHandle.GetMemberValue<ComponentTypeHandle<Route>>("__Game_Routes_Route_RW_ComponentTypeHandle");
-            __Game_Routes_Route_RW_ComponentTypeHandle.Update(ref __instance.CheckedStateRef);
-            var __Game_Policies_Policy_RO_BufferTypeHandle = typeHandle.GetMemberValue<BufferTypeHandle<Policy>>("__Game_Policies_Policy_RO_BufferTypeHandle");
-            __Game_Policies_Policy_RO_BufferTypeHandle.Update(ref __instance.CheckedStateRef);
-            InitializeRouteModifiersJob initializeRouteModifiersJob = new()
+            try
             {
-                m_RouteModifierRefreshData = new RouteModifierRefreshData(m_RouteModifierRefreshData),
-                m_PolicyType = __Game_Policies_Policy_RO_BufferTypeHandle,
-                m_RouteType = __Game_Routes_Route_RW_ComponentTypeHandle,
-                m_RouteModifierType = __Game_Routes_RouteModifier_RW_BufferTypeHandle
-            };
-            InitializeRouteModifiersJob jobData = initializeRouteModifiersJob;
+                var m_RouteModifierRefreshData = __instance.GetMemberValue<Game.Policies.RouteModifierInitializeSystem.RouteModifierRefreshData>("m_RouteModifierRefreshData");
+                m_RouteModifierRefreshData.Update(__instance);
+                var typeHandle = __instance.GetMemberValue<object>("__TypeHandle");
+                var __Game_Routes_RouteModifier_RW_BufferTypeHandle = typeHandle.GetMemberValue<BufferTypeHandle<RouteModifier>>("__Game_Routes_RouteModifier_RW_BufferTypeHandle");
+                __Game_Routes_RouteModifier_RW_BufferTypeHandle.Update(ref __instance.CheckedStateRef);
+                var __Game_Routes_Route_RW_ComponentTypeHandle = typeHandle.GetMemberValue<ComponentTypeHandle<Route>>("__Game_Routes_Route_RW_ComponentTypeHandle");
+                __Game_Routes_Route_RW_ComponentTypeHandle.Update(ref __instance.CheckedStateRef);
+                var __Game_Policies_Policy_RO_BufferTypeHandle = typeHandle.GetMemberValue<BufferTypeHandle<Policy>>("__Game_Policies_Policy_RO_BufferTypeHandle");
+                __Game_Policies_Policy_RO_BufferTypeHandle.Update(ref __instance.CheckedStateRef);
+                InitializeRouteModifiersJob initializeRouteModifiersJob = new()
+                {
+                    m_RouteModifierRefreshData = new RouteModifierRefreshData(m_RouteModifierRefreshData),
+                    m_PolicyType = __Game_Policies_Policy_RO_BufferTypeHandle,
+                    m_RouteType = __Game_Routes_Route_RW_ComponentTypeHandle,
+                    m_RouteModifierType = __Game_Routes_RouteModifier_RW_BufferTypeHandle
+                };
+                InitializeRouteModifiersJob jobData = initializeRouteModifiersJob;
 
-            var dependency = __instance.GetMemberValue<JobHandle>("Dependency");
-            __instance.SetMemberValue("Dependency", JobChunkExtensions.ScheduleParallel(jobData, __instance.GetMemberValue<EntityQuery>("m_CreatedQuery"), dependency));
+                var dependency = __instance.GetMemberValue<JobHandle>("Dependency");
+                __instance.SetMemberValue("Dependency", JobChunkExtensions.ScheduleParallel(jobData, __instance.GetMemberValue<EntityQuery>("m_CreatedQuery"), dependency));
+            }
+            catch (Exception ex)
+            {
+                var logger = LogManager.GetLogger(nameof(TransportPolicyAdjuster)).SetShowsErrorsInUI(true);
+                logger.Critical(ex, $"Something went wrong in the OnUpdate of RouteModifierInitializeSystem");
+            }
 
             return false;
         }

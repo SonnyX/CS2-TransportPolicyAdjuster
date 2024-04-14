@@ -1,11 +1,12 @@
+using Colossal.Logging;
 using Colossal.UI.Binding;
 using Game.Pathfind;
 using Game.Prefabs;
 using Game.Routes;
 using Game.UI.InGame;
 using HarmonyLib;
+using System;
 using System.Runtime.CompilerServices;
-using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -16,7 +17,6 @@ namespace TransportPolicyAdjuster
     [HarmonyPatch]
     public class VehicleCountSection
     {
-        [BurstCompile]
         public struct CalculateVehicleCountJob : IJob
         {
             [ReadOnly]
@@ -142,6 +142,8 @@ namespace TransportPolicyAdjuster
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static bool Visible(Game.UI.InGame.VehicleCountSection instance)
         {
+            var logger = LogManager.GetLogger(nameof(TransportPolicyAdjuster)).SetShowsErrorsInUI(true);
+            logger.Info("Reversed patch: Visible in VehicleCountSection");
             return false;
         }
 
@@ -149,24 +151,35 @@ namespace TransportPolicyAdjuster
         [HarmonyPrefix]
         public static bool OnSetVehicleCount(float newVehicleCount, ref Game.UI.InGame.VehicleCountSection __instance)
         {
-            var m_PoliciesUISystem = __instance.GetMemberValue<PoliciesUISystem>("m_PoliciesUISystem");
-            var selectedEntity = __instance.GetMemberValue<Entity>("selectedEntity");
-            var m_VehicleCountPolicy = __instance.GetMemberValue<Entity>("m_VehicleCountPolicy");
-            var m_CountResult = __instance.GetMemberValue<NativeList<float2>>("m_CountResult");
-            float2? delta = null;
-            for (int i = 0; i < m_CountResult.Length; i++)
+            try
             {
-                if (m_CountResult[i].x == newVehicleCount)
+                var m_PoliciesUISystem = __instance.GetMemberValue<PoliciesUISystem>("m_PoliciesUISystem");
+                var selectedEntity = __instance.GetMemberValue<Entity>("selectedEntity");
+                var m_VehicleCountPolicy = __instance.GetMemberValue<Entity>("m_VehicleCountPolicy");
+                var m_CountResult = __instance.GetMemberValue<NativeList<float2>>("m_CountResult");
+                float2? delta = null;
+                for (int i = 0; i < m_CountResult.Length; i++)
                 {
-                    delta = m_CountResult[i];
-                    break;
+                    if (m_CountResult[i].x == newVehicleCount)
+                    {
+                        delta = m_CountResult[i];
+                        break;
+                    }
                 }
+                if (!delta.HasValue)
+                {
+                    var logger = LogManager.GetLogger(nameof(TransportPolicyAdjuster)).SetShowsErrorsInUI(true);
+                    logger.Critical($"TransportPolicyAdjuster: m_CountResult does not contain index {newVehicleCount}");
+
+                    throw new System.Exception($"TransportPolicyAdjuster: m_CountResult does not contain index {newVehicleCount}");
+                }
+                m_PoliciesUISystem.SetPolicy(selectedEntity, m_VehicleCountPolicy, active: true, delta.Value.y);
             }
-            if (!delta.HasValue)
+            catch (Exception ex)
             {
-                throw new System.Exception($"TransportPolicyAdjuster: m_CountResult does not contain index {newVehicleCount}");
+                var logger = LogManager.GetLogger(nameof(TransportPolicyAdjuster)).SetShowsErrorsInUI(true);
+                logger.Critical(ex, $"Something went wrong in the OnSetVehicleCount of VehicleCountSection");
             }
-            m_PoliciesUISystem.SetPolicy(selectedEntity, m_VehicleCountPolicy, active: true, delta.Value.y);
             return false;
         }
 
@@ -174,20 +187,28 @@ namespace TransportPolicyAdjuster
         [HarmonyPrefix]
         public static bool OnWriteProperties(ref IJsonWriter writer, ref Game.UI.InGame.VehicleCountSection __instance)
         {
-            writer.PropertyName("vehicleCount");
-            writer.Write(__instance.GetMemberValue<int>("vehicleCount"));
-            writer.PropertyName("activeVehicles");
-            writer.Write(__instance.GetMemberValue<int>("activeVehicles"));
-            writer.PropertyName("vehicleCounts");
-
-            var max_vehicles = 50;
-            writer.ArrayBegin(max_vehicles);
-            for (int i = 1; i <= max_vehicles; i++)
+            try
             {
-                writer.Write(new float2(i * 10, i));
-            }
+                writer.PropertyName("vehicleCount");
+                writer.Write(__instance.GetMemberValue<int>("vehicleCount"));
+                writer.PropertyName("activeVehicles");
+                writer.Write(__instance.GetMemberValue<int>("activeVehicles"));
+                writer.PropertyName("vehicleCounts");
 
-            writer.ArrayEnd();
+                var max_vehicles = 50;
+                writer.ArrayBegin(max_vehicles);
+                for (int i = 1; i <= max_vehicles; i++)
+                {
+                    writer.Write(new float2(i * 10, i));
+                }
+
+                writer.ArrayEnd();
+            }
+            catch (Exception ex)
+            {
+                var logger = LogManager.GetLogger(nameof(TransportPolicyAdjuster)).SetShowsErrorsInUI(true);
+                logger.Critical(ex, $"Something went wrong in the OnWriteProperties of VehicleCountSection");
+            }
             return false;
         }
 
@@ -195,55 +216,63 @@ namespace TransportPolicyAdjuster
         [HarmonyPrefix]
         public static bool OnUpdate(ref Game.UI.InGame.VehicleCountSection __instance)
         {
-            __instance.SetMemberValue("visible", Visible(__instance));
-            var typeHandle = __instance.GetMemberValue<object>("__TypeHandle");
-            if (__instance.visible)
+            try
             {
-                var __Game_Prefabs_RouteModifierData_RO_BufferLookup = typeHandle.GetMemberValue<BufferLookup<RouteModifierData>>("__Game_Prefabs_RouteModifierData_RO_BufferLookup");
-                __Game_Prefabs_RouteModifierData_RO_BufferLookup.Update(ref __instance.CheckedStateRef);
-
-                var __Game_Routes_RouteModifier_RO_BufferLookup = typeHandle.GetMemberValue<BufferLookup<RouteModifier>>("__Game_Routes_RouteModifier_RO_BufferLookup");
-                __Game_Routes_RouteModifier_RO_BufferLookup.Update(ref __instance.CheckedStateRef);
-
-                var __Game_Routes_RouteSegment_RO_BufferLookup = typeHandle.GetMemberValue<BufferLookup<RouteSegment>>("__Game_Routes_RouteSegment_RO_BufferLookup");
-                __Game_Routes_RouteSegment_RO_BufferLookup.Update(ref __instance.CheckedStateRef);
-
-                var __Game_Routes_RouteWaypoint_RO_BufferLookup = typeHandle.GetMemberValue<BufferLookup<RouteWaypoint>>("__Game_Routes_RouteWaypoint_RO_BufferLookup");
-                __Game_Routes_RouteWaypoint_RO_BufferLookup.Update(ref __instance.CheckedStateRef);
-
-                var __Game_Routes_RouteVehicle_RO_BufferLookup = typeHandle.GetMemberValue<BufferLookup<RouteVehicle>>("__Game_Routes_RouteVehicle_RO_BufferLookup");
-                __Game_Routes_RouteVehicle_RO_BufferLookup.Update(ref __instance.CheckedStateRef);
-
-                var __Game_Pathfind_PathInformation_RO_ComponentLookup = typeHandle.GetMemberValue<ComponentLookup<PathInformation>>("__Game_Pathfind_PathInformation_RO_ComponentLookup");
-                __Game_Pathfind_PathInformation_RO_ComponentLookup.Update(ref __instance.CheckedStateRef);
-
-                var __Game_Routes_VehicleTiming_RO_ComponentLookup = typeHandle.GetMemberValue<ComponentLookup<VehicleTiming>>("__Game_Routes_VehicleTiming_RO_ComponentLookup");
-                __Game_Routes_VehicleTiming_RO_ComponentLookup.Update(ref __instance.CheckedStateRef);
-
-                var __Game_Prefabs_PolicySliderData_RO_ComponentLookup = typeHandle.GetMemberValue<ComponentLookup<PolicySliderData>>("__Game_Prefabs_PolicySliderData_RO_ComponentLookup");
-                __Game_Prefabs_PolicySliderData_RO_ComponentLookup.Update(ref __instance.CheckedStateRef);
-
-                var __Game_Prefabs_TransportLineData_RO_ComponentLookup = typeHandle.GetMemberValue<ComponentLookup<TransportLineData>>("__Game_Prefabs_TransportLineData_RO_ComponentLookup");
-                __Game_Prefabs_TransportLineData_RO_ComponentLookup.Update(ref __instance.CheckedStateRef);
-
-                CalculateVehicleCountJob jobData = new()
+                __instance.SetMemberValue("visible", Visible(__instance));
+                var typeHandle = __instance.GetMemberValue<object>("__TypeHandle");
+                if (__instance.visible)
                 {
-                    m_SelectedEntity = __instance.GetMemberValue<Entity>("selectedEntity"),
-                    m_SelectedPrefab = __instance.GetMemberValue<Entity>("selectedPrefab"),
-                    m_Policy = __instance.GetMemberValue<Entity>("m_VehicleCountPolicy"),
-                    m_TransportLineDatas = __Game_Prefabs_TransportLineData_RO_ComponentLookup,
-                    m_PolicySliderDatas = __Game_Prefabs_PolicySliderData_RO_ComponentLookup,
-                    m_VehicleTimings = __Game_Routes_VehicleTiming_RO_ComponentLookup,
-                    m_PathInformations = __Game_Pathfind_PathInformation_RO_ComponentLookup,
-                    m_RouteVehicles = __Game_Routes_RouteVehicle_RO_BufferLookup,
-                    m_RouteWaypoints = __Game_Routes_RouteWaypoint_RO_BufferLookup,
-                    m_RouteSegments = __Game_Routes_RouteSegment_RO_BufferLookup,
-                    m_RouteModifiers = __Game_Routes_RouteModifier_RO_BufferLookup,
-                    m_RouteModifierDatas = __Game_Prefabs_RouteModifierData_RO_BufferLookup,
-                    m_IntResults = __instance.GetMemberValue<NativeArray<int>>("m_IntResults"),
-                    m_CountResults = __instance.GetMemberValue<NativeList<float2>>("m_CountResult")
-                };
-                IJobExtensions.Schedule(jobData, __instance.GetMemberValue<JobHandle>("Dependency")).Complete();
+                    var __Game_Prefabs_RouteModifierData_RO_BufferLookup = typeHandle.GetMemberValue<BufferLookup<RouteModifierData>>("__Game_Prefabs_RouteModifierData_RO_BufferLookup");
+                    __Game_Prefabs_RouteModifierData_RO_BufferLookup.Update(ref __instance.CheckedStateRef);
+
+                    var __Game_Routes_RouteModifier_RO_BufferLookup = typeHandle.GetMemberValue<BufferLookup<RouteModifier>>("__Game_Routes_RouteModifier_RO_BufferLookup");
+                    __Game_Routes_RouteModifier_RO_BufferLookup.Update(ref __instance.CheckedStateRef);
+
+                    var __Game_Routes_RouteSegment_RO_BufferLookup = typeHandle.GetMemberValue<BufferLookup<RouteSegment>>("__Game_Routes_RouteSegment_RO_BufferLookup");
+                    __Game_Routes_RouteSegment_RO_BufferLookup.Update(ref __instance.CheckedStateRef);
+
+                    var __Game_Routes_RouteWaypoint_RO_BufferLookup = typeHandle.GetMemberValue<BufferLookup<RouteWaypoint>>("__Game_Routes_RouteWaypoint_RO_BufferLookup");
+                    __Game_Routes_RouteWaypoint_RO_BufferLookup.Update(ref __instance.CheckedStateRef);
+
+                    var __Game_Routes_RouteVehicle_RO_BufferLookup = typeHandle.GetMemberValue<BufferLookup<RouteVehicle>>("__Game_Routes_RouteVehicle_RO_BufferLookup");
+                    __Game_Routes_RouteVehicle_RO_BufferLookup.Update(ref __instance.CheckedStateRef);
+
+                    var __Game_Pathfind_PathInformation_RO_ComponentLookup = typeHandle.GetMemberValue<ComponentLookup<PathInformation>>("__Game_Pathfind_PathInformation_RO_ComponentLookup");
+                    __Game_Pathfind_PathInformation_RO_ComponentLookup.Update(ref __instance.CheckedStateRef);
+
+                    var __Game_Routes_VehicleTiming_RO_ComponentLookup = typeHandle.GetMemberValue<ComponentLookup<VehicleTiming>>("__Game_Routes_VehicleTiming_RO_ComponentLookup");
+                    __Game_Routes_VehicleTiming_RO_ComponentLookup.Update(ref __instance.CheckedStateRef);
+
+                    var __Game_Prefabs_PolicySliderData_RO_ComponentLookup = typeHandle.GetMemberValue<ComponentLookup<PolicySliderData>>("__Game_Prefabs_PolicySliderData_RO_ComponentLookup");
+                    __Game_Prefabs_PolicySliderData_RO_ComponentLookup.Update(ref __instance.CheckedStateRef);
+
+                    var __Game_Prefabs_TransportLineData_RO_ComponentLookup = typeHandle.GetMemberValue<ComponentLookup<TransportLineData>>("__Game_Prefabs_TransportLineData_RO_ComponentLookup");
+                    __Game_Prefabs_TransportLineData_RO_ComponentLookup.Update(ref __instance.CheckedStateRef);
+
+                    CalculateVehicleCountJob jobData = new()
+                    {
+                        m_SelectedEntity = __instance.GetMemberValue<Entity>("selectedEntity"),
+                        m_SelectedPrefab = __instance.GetMemberValue<Entity>("selectedPrefab"),
+                        m_Policy = __instance.GetMemberValue<Entity>("m_VehicleCountPolicy"),
+                        m_TransportLineDatas = __Game_Prefabs_TransportLineData_RO_ComponentLookup,
+                        m_PolicySliderDatas = __Game_Prefabs_PolicySliderData_RO_ComponentLookup,
+                        m_VehicleTimings = __Game_Routes_VehicleTiming_RO_ComponentLookup,
+                        m_PathInformations = __Game_Pathfind_PathInformation_RO_ComponentLookup,
+                        m_RouteVehicles = __Game_Routes_RouteVehicle_RO_BufferLookup,
+                        m_RouteWaypoints = __Game_Routes_RouteWaypoint_RO_BufferLookup,
+                        m_RouteSegments = __Game_Routes_RouteSegment_RO_BufferLookup,
+                        m_RouteModifiers = __Game_Routes_RouteModifier_RO_BufferLookup,
+                        m_RouteModifierDatas = __Game_Prefabs_RouteModifierData_RO_BufferLookup,
+                        m_IntResults = __instance.GetMemberValue<NativeArray<int>>("m_IntResults"),
+                        m_CountResults = __instance.GetMemberValue<NativeList<float2>>("m_CountResult"),
+                    };
+                    IJobExtensions.Schedule(jobData, __instance.GetMemberValue<JobHandle>("Dependency")).Complete();
+                }
+            }
+            catch (Exception ex)
+            {
+                var logger = LogManager.GetLogger(nameof(TransportPolicyAdjuster)).SetShowsErrorsInUI(true);
+                logger.Critical(ex, $"Something went wrong in the OnUpdate of VehicleCountSection");
             }
             return false;
         }

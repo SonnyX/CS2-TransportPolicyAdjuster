@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Colossal.Logging;
+using System;
 using System.Reflection;
 
 namespace TransportPolicyAdjuster
@@ -15,12 +16,12 @@ namespace TransportPolicyAdjuster
         public static T GetMemberValue<T>(this object obj, string memberName)
         {
             var memInf = GetMemberInfo(obj, memberName);
-            object value = null;
+            object? value = null;
             try
             {
                 if (memInf is PropertyInfo)
                 {
-                    value = memInf.As<PropertyInfo>().GetValue(obj, null);
+                    value = memInf.As<PropertyInfo>().GetValue(obj);
                     return (T)value;
                 }
                 else if (memInf is FieldInfo)
@@ -28,11 +29,18 @@ namespace TransportPolicyAdjuster
                     value = memInf.As<FieldInfo>().GetValue(obj);
                     return (T)value;
                 }
+
+                var logger = LogManager.GetLogger(nameof(TransportPolicyAdjuster)).SetShowsErrorsInUI(true);
+                logger.Critical($"{nameof(ReflectionExtensions)}: Couldn't find member name: {memberName}!");
+
                 throw new Exception($"{nameof(ReflectionExtensions)}: Couldn't find member name: {memberName}!");
             }
             catch(InvalidCastException ex)
             {
-                throw new Exception($"Cannot cast {value.GetType().FullName} to {typeof(T).GetType().FullName}");
+                var logger = LogManager.GetLogger(nameof(TransportPolicyAdjuster)).SetShowsErrorsInUI(true);
+                logger.Critical(ex, $"Cannot cast {value?.GetType().FullName} to {typeof(T).GetType().FullName}");
+
+                throw new Exception($"Cannot cast {value?.GetType().FullName} to {typeof(T).GetType().FullName}");
             }
         }
 
@@ -51,11 +59,16 @@ namespace TransportPolicyAdjuster
             var oldValue = obj.GetMemberValue<T>(memberName);
             if (memInf is PropertyInfo)
             {
-                memInf.As<PropertyInfo>().SetValue(obj, newValue, null);
+                memInf.As<PropertyInfo>().SetValue(obj, newValue);
             }
             else if (memInf is FieldInfo)
             {
                 memInf.As<FieldInfo>().SetValue(obj, newValue);
+            }
+            else
+            {
+                var logger = LogManager.GetLogger(nameof(TransportPolicyAdjuster)).SetShowsErrorsInUI(true);
+                logger.Critical($"Did not set {memberName} to {newValue} as the {memberName} is neither a Property or a Field...");
             }
 
             return oldValue;
@@ -67,7 +80,7 @@ namespace TransportPolicyAdjuster
         /// <param name="obj">Object to be reflected.</param>
         /// <param name="memberName">String name of member.</param>
         /// <returns>Member info.</returns>
-        private static MemberInfo GetMemberInfo(object obj, string memberName)
+        private static MemberInfo? GetMemberInfo(object obj, string memberName)
         {
             var prps = new System.Collections.Generic.List<PropertyInfo>
             {
@@ -94,6 +107,9 @@ namespace TransportPolicyAdjuster
             {
                 return flds[0];
             }
+
+            var logger = LogManager.GetLogger(nameof(TransportPolicyAdjuster)).SetShowsErrorsInUI(true);
+            logger.Log(Level.Warn, $"{memberName}'s GetMemberInfo returned null", null);
 
             return null;
         }
