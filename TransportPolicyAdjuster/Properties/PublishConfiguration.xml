@@ -28,8 +28,6 @@ A mod that changes the range of the assigned vehicles slider from 50%-200% to 1-
 	<ChangeLog>
 Added dll dependencies to ensure it works without relying on other mods.
 	</ChangeLog>
-	<!--ChangeLog>
-	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon-->
-	<ExternalLink Type="" Url="" />
+	<ExternalLink Type="github" Url="https://github.com/SonnyX/CS2-TransportPolicyAdjuster" />
 </Publish>

@@ -29,6 +29,9 @@ namespace TransportPolicyAdjuster
             public Entity m_Policy;
 
             [ReadOnly]
+            public int m_MaxVehicleCount;
+
+            [ReadOnly]
             public ComponentLookup<VehicleTiming> m_VehicleTimings;
 
             [ReadOnly]
@@ -83,7 +86,7 @@ namespace TransportPolicyAdjuster
                     }
 
                     ref NativeList<float2> countResults = ref m_CountResults;
-                    for (int desiredVehicles = 1; desiredVehicles <= Mod.m_Setting.MaxVehicleCount; desiredVehicles++)
+                    for (int desiredVehicles = 1; desiredVehicles <= m_MaxVehicleCount; desiredVehicles++)
                     {
                         var delta = 100f / (lineDuration / (defaultVehicleInterval * desiredVehicles));
                         float2 value2 = new float2(desiredVehicles * sliderData.m_Step, delta);
@@ -195,8 +198,13 @@ namespace TransportPolicyAdjuster
                 writer.Write(__instance.GetMemberValue<int>("activeVehicles"));
                 writer.PropertyName("vehicleCounts");
 
-                writer.ArrayBegin(Mod.m_Setting.MaxVehicleCount);
-                for (int i = 1; i <= Mod.m_Setting.MaxVehicleCount; i++)
+                var typeHandle = __instance.GetMemberValue<object>("__TypeHandle");
+                var __Game_Prefabs_TransportLineData_RO_ComponentLookup = typeHandle.GetMemberValue<ComponentLookup<TransportLineData>>("__Game_Prefabs_TransportLineData_RO_ComponentLookup");
+                __Game_Prefabs_TransportLineData_RO_ComponentLookup.Update(ref __instance.CheckedStateRef);
+                var maxVehicleCount = Mod.m_Setting.GetMaximumCount(__Game_Prefabs_TransportLineData_RO_ComponentLookup[__instance.GetMemberValue<Entity>("selectedPrefab")].m_TransportType);
+
+                writer.ArrayBegin(maxVehicleCount);
+                for (int i = 1; i <= maxVehicleCount; i++)
                 {
                     writer.Write(new float2(i * 10, i));
                 }
@@ -253,6 +261,7 @@ namespace TransportPolicyAdjuster
                         m_SelectedEntity = __instance.GetMemberValue<Entity>("selectedEntity"),
                         m_SelectedPrefab = __instance.GetMemberValue<Entity>("selectedPrefab"),
                         m_Policy = __instance.GetMemberValue<Entity>("m_VehicleCountPolicy"),
+                        m_MaxVehicleCount = Mod.m_Setting.GetMaximumCount(__Game_Prefabs_TransportLineData_RO_ComponentLookup[__instance.GetMemberValue<Entity>("selectedPrefab")].m_TransportType),
                         m_TransportLineDatas = __Game_Prefabs_TransportLineData_RO_ComponentLookup,
                         m_PolicySliderDatas = __Game_Prefabs_PolicySliderData_RO_ComponentLookup,
                         m_VehicleTimings = __Game_Routes_VehicleTiming_RO_ComponentLookup,

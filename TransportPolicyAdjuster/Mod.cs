@@ -33,7 +33,7 @@ namespace TransportPolicyAdjuster
 
             m_Setting = new Setting(this);
             m_Setting.RegisterInOptionsUI();
-            GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(m_Setting));
+            GameManager.instance.localizationManager.AddSource("en-US", new LocaleEn(m_Setting));
 
             AssetDatabase.global.LoadSettings(nameof(TransportPolicyAdjuster), m_Setting, new Setting(this));
 
