@@ -1,5 +1,6 @@
 #define BURST
 
+using Colossal.IO.AssetDatabase;
 using Game;
 using Game.Modding;
 using Colossal.Logging;
@@ -13,6 +14,7 @@ namespace TransportPolicyAdjuster
     public class Mod : IMod
     {
         public static ILog log = LogManager.GetLogger(nameof(TransportPolicyAdjuster)).SetShowsErrorsInUI(true);
+        public static Setting m_Setting;
 
         public void OnLoad(UpdateSystem updateSystem)
         {
@@ -29,6 +31,12 @@ namespace TransportPolicyAdjuster
 
             log.Info($"Did we manage to load the burst libraries? {loadedBurstLibraries}");
 
+            m_Setting = new Setting(this);
+            m_Setting.RegisterInOptionsUI();
+            GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(m_Setting));
+
+            AssetDatabase.global.LoadSettings(nameof(TransportPolicyAdjuster), m_Setting, new Setting(this));
+
 
             var harmony = new Harmony("com.github.sonnyx.transportpolicyadjuster");
             harmony.PatchAll(typeof(Mod).Assembly);
@@ -39,11 +47,14 @@ namespace TransportPolicyAdjuster
                 log.Info($"Current mod asset at {asset.path}");
 
             updateSystem.UpdateAt<ModifiedSystem>(SystemUpdatePhase.Modification4);
+
         }
 
         public void OnDispose()
         {
             log.Info(nameof(OnDispose));
+            m_Setting.UnregisterInOptionsUI();
+            m_Setting = null;
         }
     }
 }

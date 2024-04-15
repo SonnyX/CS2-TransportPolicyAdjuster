@@ -83,7 +83,7 @@ namespace TransportPolicyAdjuster
                     }
 
                     ref NativeList<float2> countResults = ref m_CountResults;
-                    for (int desiredVehicles = 1; desiredVehicles <= 50; desiredVehicles++)
+                    for (int desiredVehicles = 1; desiredVehicles <= Mod.m_Setting.MaxVehicleCount; desiredVehicles++)
                     {
                         var delta = 100f / (lineDuration / (defaultVehicleInterval * desiredVehicles));
                         float2 value2 = new float2(desiredVehicles * sliderData.m_Step, delta);
@@ -195,9 +195,8 @@ namespace TransportPolicyAdjuster
                 writer.Write(__instance.GetMemberValue<int>("activeVehicles"));
                 writer.PropertyName("vehicleCounts");
 
-                var max_vehicles = 50;
-                writer.ArrayBegin(max_vehicles);
-                for (int i = 1; i <= max_vehicles; i++)
+                writer.ArrayBegin(Mod.m_Setting.MaxVehicleCount);
+                for (int i = 1; i <= Mod.m_Setting.MaxVehicleCount; i++)
                 {
                     writer.Write(new float2(i * 10, i));
                 }
