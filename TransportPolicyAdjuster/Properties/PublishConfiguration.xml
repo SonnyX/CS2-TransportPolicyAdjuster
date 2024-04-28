@@ -4,28 +4,30 @@
 	<!--Name of the mod to display to players-->
 	<DisplayName Value="TransportPolicyAdjuster" />
 	<!--Short description of the mod-->
-	<ShortDescription Value="Set the desired vehicles count regardless of your route length!" />
+	<ShortDescription Value="Set the desired vehicles count regardless of the route length!" />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<LongDescription>
-A mod that changes the range of the assigned vehicles slider from 50%-200% to your desired assigned vehicles amount.
+A mod that changes the range of the assigned vehicles slider to your desired assigned vehicles amount.
 	</LongDescription>
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/Thumbnail.png" />
 	<!--Screenshot, can be set multiple times-->
-	<Screenshot Value="" />
+	<Screenshot Value="Properties/SettingsPage.png" />
+	<Screenshot Value="Properties/AssignedVehicles.png" />
+	<Screenshot Value="Properties/NamedRoutes.png" />
 	<!--Tag, can be set multiple times-->
 	<Tag Value="" />
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.2" />
+	<ModVersion Value="1.3" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.*.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog>
-Added settings screen with different maximum counts per transport type
+Adjusted default maximum counts per transport type
 	</ChangeLog>
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon-->
 	<ExternalLink Type="github" Url="https://github.com/SonnyX/CS2-TransportPolicyAdjuster" />

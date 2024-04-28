@@ -22,11 +22,11 @@ namespace TransportPolicyAdjuster
 
         [SettingsUISlider(min = 10, max = 100, step = 10, scalarMultiplier = 1, unit = "vehicles")]
         [SettingsUISection(kSection)]
-        public int Train { get; set; } = 10;
+        public int Train { get; set; } = 20;
 
-        [SettingsUISlider(min = 5, max = 100, step = 10, scalarMultiplier = 1, unit = "vehicles")]
+        [SettingsUISlider(min = 5, max = 200, step = 5, scalarMultiplier = 1, unit = "vehicles")]
         [SettingsUISection(kSection)]
-        public int Tram { get; set; } = 5;
+        public int Tram { get; set; } = 25;
 
         [SettingsUISlider(min = 5, max = 50, step = 5, scalarMultiplier = 1, unit = "vehicles")]
         [SettingsUISection(kSection)]
@@ -36,9 +36,9 @@ namespace TransportPolicyAdjuster
         [SettingsUISection(kSection)]
         public int Airplane { get; set; } = 5;
 
-        [SettingsUISlider(min = 5, max = 50, step = 5, scalarMultiplier = 1, unit = "vehicles")]
+        [SettingsUISlider(min = 5, max = 100, step = 5, scalarMultiplier = 1, unit = "vehicles")]
         [SettingsUISection(kSection)]
-        public int Subway { get; set; } = 5;
+        public int Subway { get; set; } = 10;
 
         public int GetMaximumCount(TransportType transportType) => transportType switch
         {
@@ -55,7 +55,7 @@ namespace TransportPolicyAdjuster
         {
             Bus = 50;
             Train = 10;
-            Tram = 5;
+            Tram = 25;
             Ship = 5;
             Airplane = 5;
             Subway = 5;
