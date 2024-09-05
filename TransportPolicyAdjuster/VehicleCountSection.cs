@@ -60,7 +60,7 @@ namespace TransportPolicyAdjuster
 
             public NativeArray<int> m_IntResults;
 
-            public NativeList<float2> m_CountResults;
+            public NativeReference<float> m_Duration;
 
             public void Execute()
             {
@@ -75,27 +75,29 @@ namespace TransportPolicyAdjuster
 
                 RouteUtils.ApplyModifier(ref vehicleInterval, modifiers, RouteModifierType.VehicleInterval);
 
-                float lineDuration = CalculateStableDuration(transportLineData);
+                m_Duration = CalculateStableDuration(transportLineData);
 
-                for (int i = 0; i < routeModifiers.Length; i++)
-                {
-                    RouteModifierData routeModifier = routeModifiers[i];
-                    if (routeModifier.m_Type != RouteModifierType.VehicleInterval)
-                    {
-                        continue;
-                    }
+                // for (int i = 0; i < routeModifiers.Length; i++)
+                // {
+                //     RouteModifierData routeModifier = routeModifiers[i];
+                //     if (routeModifier.m_Type != RouteModifierType.VehicleInterval)
+                //     {
+                //         continue;
+                //     }
 
-                    ref NativeList<float2> countResults = ref m_CountResults;
-                    for (int desiredVehicles = 1; desiredVehicles <= m_MaxVehicleCount; desiredVehicles++)
-                    {
-                        var delta = 100f / (lineDuration / (defaultVehicleInterval * desiredVehicles));
-                        float2 value2 = new float2(desiredVehicles * sliderData.m_Step, delta);
-                        countResults.Add(in value2);
-                    }
-                }
+                //     ref NativeList<float2> countResults = ref m_CountResults;
+                //     for (int desiredVehicles = 1; desiredVehicles <= m_MaxVehicleCount; desiredVehicles++)
+                //     {
+                //         var delta = 100f / (lineDuration / (defaultVehicleInterval * desiredVehicles));
+                //         float2 value2 = new float2(desiredVehicles * sliderData.m_Step, delta);
+                //         countResults.Add(in value2);
+                //     }
+                // }
 
                 m_IntResults[0] = CalculateVehicleCount(vehicleInterval, lineDuration);
                 m_IntResults[1] = activeVehicles.Length;
+                m_IntResults[2] = 1;
+                m_IntResults[3] = Mod.m_Setting.GetMaximumCount(__Game_Prefabs_TransportLineData_RO_ComponentLookup[__instance.GetMemberValue<Entity>("selectedPrefab")].m_TransportType);
             }
 
             private int CalculateVehicleCount(float vehicleInterval, float lineDuration)
@@ -192,6 +194,10 @@ namespace TransportPolicyAdjuster
         {
             try
             {
+                writer.PropertyName("vehicleCountMin");
+                writer.Write(__instance.GetMemberValue<int>("vehicleCountMin"));
+                writer.PropertyName("vehicleCountMax");
+                writer.Write(__instance.GetMemberValue<int>("vehicleCountMax"));
                 writer.PropertyName("vehicleCount");
                 writer.Write(__instance.GetMemberValue<int>("vehicleCount"));
                 writer.PropertyName("activeVehicles");
@@ -255,7 +261,6 @@ namespace TransportPolicyAdjuster
 
                     var __Game_Prefabs_TransportLineData_RO_ComponentLookup = typeHandle.GetMemberValue<ComponentLookup<TransportLineData>>("__Game_Prefabs_TransportLineData_RO_ComponentLookup");
                     __Game_Prefabs_TransportLineData_RO_ComponentLookup.Update(ref __instance.CheckedStateRef);
-
                     CalculateVehicleCountJob jobData = new()
                     {
                         m_SelectedEntity = __instance.GetMemberValue<Entity>("selectedEntity"),
@@ -272,7 +277,7 @@ namespace TransportPolicyAdjuster
                         m_RouteModifiers = __Game_Routes_RouteModifier_RO_BufferLookup,
                         m_RouteModifierDatas = __Game_Prefabs_RouteModifierData_RO_BufferLookup,
                         m_IntResults = __instance.GetMemberValue<NativeArray<int>>("m_IntResults"),
-                        m_CountResults = __instance.GetMemberValue<NativeList<float2>>("m_CountResult"),
+                        m_Duration = __instance.GetMemberValue<NativeReference<float>>("m_Duration"),
                     };
                     IJobExtensions.Schedule(jobData, __instance.GetMemberValue<JobHandle>("Dependency")).Complete();
                 }
