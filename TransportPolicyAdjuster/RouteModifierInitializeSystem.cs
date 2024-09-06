@@ -106,52 +106,73 @@ namespace TransportPolicyAdjuster
                 for (int i = 0; i < policies.Length; i++)
                 {
                     Policy policy = policies[i];
-                    if ((policy.m_Flags & PolicyFlags.Active) == 0 || !m_RouteModifierData.HasBuffer(policy.m_Policy))
+                    if ((policy.m_Flags & PolicyFlags.Active) != 0 && m_RouteModifierData.HasBuffer(policy.m_Policy))
                     {
-                        continue;
-                    }
-                    DynamicBuffer<RouteModifierData> dynamicBuffer = m_RouteModifierData[policy.m_Policy];
-                    for (int j = 0; j < dynamicBuffer.Length; j++)
-                    {
-                        RouteModifierData modifierData = dynamicBuffer[j];
-                        float delta;
-                        if (m_PolicySliderData.HasComponent(policy.m_Policy))
+                        DynamicBuffer<RouteModifierData> dynamicBuffer = m_RouteModifierData[policy.m_Policy];
+                        for (int j = 0; j < dynamicBuffer.Length; j++)
                         {
-                            PolicySliderData policySliderData = m_PolicySliderData[policy.m_Policy];
-                            float a = (policy.m_Adjustment - policySliderData.m_Range.min) / (policySliderData.m_Range.max - policySliderData.m_Range.min);
-                            a = math.select(a, 0f, policySliderData.m_Range.min == policySliderData.m_Range.max);
-                            delta = math.lerp(modifierData.m_Range.min, modifierData.m_Range.max, a);
+                            RouteModifierData modifierData = dynamicBuffer[j];
+                            float modifierDelta = GetModifierDelta(modifierData, policy.m_Adjustment, policy.m_Policy, m_PolicySliderData);
+                            AddModifier(modifiers, modifierData, modifierDelta);
                         }
-                        else
-                        {
-                            delta = modifierData.m_Range.min;
-                        }
-                        AddModifier(modifiers, modifierData, delta);
                     }
                 }
             }
 
-            public static void AddModifier(DynamicBuffer<RouteModifier> modifiers, RouteModifierData modifierData, float delta)
+            public static float GetModifierDelta(RouteModifierData modifierData, float policyAdjustment, Entity policy, ComponentLookup<PolicySliderData> policySliderData)
+            {
+                if (policySliderData.HasComponent(policy))
+                {
+                    PolicySliderData policySliderData2 = policySliderData[policy];
+                    float a = (policyAdjustment - policySliderData2.m_Range.min) / (policySliderData2.m_Range.max - policySliderData2.m_Range.min);
+                    a = math.select(a, 0f, policySliderData2.m_Range.min == policySliderData2.m_Range.max);
+                    return math.lerp(modifierData.m_Range.min, modifierData.m_Range.max, a);
+                }
+                return modifierData.m_Range.min;
+            }
+
+            public static float GetPolicyAdjustmentFromModifierDelta(RouteModifierData modifierData, float modifierDelta, PolicySliderData sliderData)
+            {
+                return math.clamp(math.remap(modifierData.m_Range.min, modifierData.m_Range.max, sliderData.m_Range.min, sliderData.m_Range.max, modifierDelta), sliderData.m_Range.min, sliderData.m_Range.max);
+            }
+
+            public static void AddModifierData(ref RouteModifier modifier, RouteModifierData modifierData, float delta)
+            {
+                switch (modifierData.m_Mode)
+                {
+                    case ModifierValueMode.Relative:
+                        modifier.m_Delta.y = modifier.m_Delta.y * (1f + delta) + delta;
+                        break;
+                    case ModifierValueMode.Absolute:
+                        modifier.m_Delta.x += delta;
+                        break;
+                    case ModifierValueMode.InverseRelative:
+                        delta = 1f / math.max(0.001f, 1f + delta) - 1f;
+                        modifier.m_Delta.y = modifier.m_Delta.y * (1f + delta) + delta;
+                        break;
+                }
+            }
+
+            public static float GetDeltaFromModifier(RouteModifier modifier, RouteModifierData modifierData)
+            {
+                return modifierData.m_Mode switch
+                {
+                    ModifierValueMode.Relative => modifier.m_Delta.y,
+                    ModifierValueMode.Absolute => modifier.m_Delta.x,
+                    ModifierValueMode.InverseRelative => (0f - modifier.m_Delta.y) / (1f + modifier.m_Delta.y),
+                    _ => throw new ArgumentException(),
+                };
+            }
+
+            private static void AddModifier(DynamicBuffer<RouteModifier> modifiers, RouteModifierData modifierData, float delta)
             {
                 while (modifiers.Length <= (int)modifierData.m_Type)
                 {
                     modifiers.Add(default(RouteModifier));
                 }
-                RouteModifier value = modifiers[(int)modifierData.m_Type];
-                switch (modifierData.m_Mode)
-                {
-                    case ModifierValueMode.Relative:
-                        value.m_Delta.y = value.m_Delta.y * (1f + delta) + delta;
-                        break;
-                    case ModifierValueMode.Absolute:
-                        value.m_Delta.x += delta;
-                        break;
-                    case ModifierValueMode.InverseRelative:
-                        delta = 1f / math.max(0.001f, 1f + delta) - 1f;
-                        value.m_Delta.y = value.m_Delta.y * (1f + delta) + delta;
-                        break;
-                }
-                modifiers[(int)modifierData.m_Type] = value;
+                RouteModifier modifier = modifiers[(int)modifierData.m_Type];
+                AddModifierData(ref modifier, modifierData, delta);
+                modifiers[(int)modifierData.m_Type] = modifier;
             }
         }
 

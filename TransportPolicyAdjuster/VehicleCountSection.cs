@@ -3,6 +3,7 @@ using Colossal.UI.Binding;
 using Game.Pathfind;
 using Game.Prefabs;
 using Game.Routes;
+using Game.Simulation;
 using Game.UI.InGame;
 using HarmonyLib;
 using System;
@@ -60,7 +61,7 @@ namespace TransportPolicyAdjuster
 
             public NativeArray<int> m_IntResults;
 
-            public NativeList<float2> m_CountResults;
+            public NativeReference<float> m_Duration;
 
             public void Execute()
             {
@@ -76,31 +77,16 @@ namespace TransportPolicyAdjuster
                 RouteUtils.ApplyModifier(ref vehicleInterval, modifiers, RouteModifierType.VehicleInterval);
 
                 float lineDuration = CalculateStableDuration(transportLineData);
+                m_Duration.Value = lineDuration;
 
-                for (int i = 0; i < routeModifiers.Length; i++)
-                {
-                    RouteModifierData routeModifier = routeModifiers[i];
-                    if (routeModifier.m_Type != RouteModifierType.VehicleInterval)
-                    {
-                        continue;
-                    }
-
-                    ref NativeList<float2> countResults = ref m_CountResults;
-                    for (int desiredVehicles = 1; desiredVehicles <= m_MaxVehicleCount; desiredVehicles++)
-                    {
-                        var delta = 100f / (lineDuration / (defaultVehicleInterval * desiredVehicles));
-                        float2 value2 = new float2(desiredVehicles * sliderData.m_Step, delta);
-                        countResults.Add(in value2);
-                    }
-                }
-
-                m_IntResults[0] = CalculateVehicleCount(vehicleInterval, lineDuration);
+                // Default vehicle count
+                m_IntResults[0] = TransportLineSystem.CalculateVehicleCount(vehicleInterval, lineDuration);
+                // active vehicles
                 m_IntResults[1] = activeVehicles.Length;
-            }
-
-            private int CalculateVehicleCount(float vehicleInterval, float lineDuration)
-            {
-                return math.max(1, (int)math.round(lineDuration / math.max(1f, vehicleInterval)));
+                // vehicleCountMin
+                m_IntResults[2] = 1;
+                // vehicleCountMax
+                m_IntResults[3] = m_MaxVehicleCount;
             }
 
             private float CalculateStableDuration(TransportLineData transportLineData)
@@ -159,24 +145,17 @@ namespace TransportPolicyAdjuster
                 var m_PoliciesUISystem = __instance.GetMemberValue<PoliciesUISystem>("m_PoliciesUISystem");
                 var selectedEntity = __instance.GetMemberValue<Entity>("selectedEntity");
                 var m_VehicleCountPolicy = __instance.GetMemberValue<Entity>("m_VehicleCountPolicy");
-                var m_CountResult = __instance.GetMemberValue<NativeList<float2>>("m_CountResult");
-                float2? delta = null;
-                for (int i = 0; i < m_CountResult.Length; i++)
-                {
-                    if (m_CountResult[i].x == newVehicleCount)
-                    {
-                        delta = m_CountResult[i];
-                        break;
-                    }
-                }
-                if (!delta.HasValue)
-                {
-                    var logger = LogManager.GetLogger(nameof(TransportPolicyAdjuster)).SetShowsErrorsInUI(true);
-                    logger.Critical($"TransportPolicyAdjuster: m_CountResult does not contain index {newVehicleCount}");
 
-                    throw new System.Exception($"TransportPolicyAdjuster: m_CountResult does not contain index {newVehicleCount}");
-                }
-                m_PoliciesUISystem.SetPolicy(selectedEntity, m_VehicleCountPolicy, active: true, delta.Value.y);
+                var stableDuration = __instance.GetMemberValue<float>("stableDuration");
+
+                var typeHandle = __instance.GetMemberValue<object>("__TypeHandle");
+                var __Game_Prefabs_TransportLineData_RO_ComponentLookup = typeHandle.GetMemberValue<ComponentLookup<TransportLineData>>("__Game_Prefabs_TransportLineData_RO_ComponentLookup");
+                var defaultVehicleInterval = __Game_Prefabs_TransportLineData_RO_ComponentLookup[__instance.GetMemberValue<Entity>("selectedPrefab")].m_DefaultVehicleInterval;
+
+                Mod.log.Info($"newVehicleCount: {newVehicleCount}, stableDuration: {stableDuration}, defaultVehicleInterval: {defaultVehicleInterval}");
+
+                float vehicleInterval = 100f / (stableDuration / (defaultVehicleInterval * newVehicleCount));
+                m_PoliciesUISystem.SetPolicy(selectedEntity, m_VehicleCountPolicy, active: true, vehicleInterval);
             }
             catch (Exception ex)
             {
@@ -192,24 +171,19 @@ namespace TransportPolicyAdjuster
         {
             try
             {
-                writer.PropertyName("vehicleCount");
-                writer.Write(__instance.GetMemberValue<int>("vehicleCount"));
-                writer.PropertyName("activeVehicles");
-                writer.Write(__instance.GetMemberValue<int>("activeVehicles"));
-                writer.PropertyName("vehicleCounts");
-
                 var typeHandle = __instance.GetMemberValue<object>("__TypeHandle");
                 var __Game_Prefabs_TransportLineData_RO_ComponentLookup = typeHandle.GetMemberValue<ComponentLookup<TransportLineData>>("__Game_Prefabs_TransportLineData_RO_ComponentLookup");
                 __Game_Prefabs_TransportLineData_RO_ComponentLookup.Update(ref __instance.CheckedStateRef);
                 var maxVehicleCount = Mod.m_Setting.GetMaximumCount(__Game_Prefabs_TransportLineData_RO_ComponentLookup[__instance.GetMemberValue<Entity>("selectedPrefab")].m_TransportType);
 
-                writer.ArrayBegin(maxVehicleCount);
-                for (int i = 1; i <= maxVehicleCount; i++)
-                {
-                    writer.Write(new float2(i * 10, i));
-                }
-
-                writer.ArrayEnd();
+                writer.PropertyName("vehicleCountMin");
+                writer.Write(1);
+                writer.PropertyName("vehicleCountMax");
+                writer.Write(maxVehicleCount);
+                writer.PropertyName("vehicleCount");
+                writer.Write(__instance.GetMemberValue<int>("vehicleCount"));
+                writer.PropertyName("activeVehicles");
+                writer.Write(__instance.GetMemberValue<int>("activeVehicles"));
             }
             catch (Exception ex)
             {
@@ -272,7 +246,7 @@ namespace TransportPolicyAdjuster
                         m_RouteModifiers = __Game_Routes_RouteModifier_RO_BufferLookup,
                         m_RouteModifierDatas = __Game_Prefabs_RouteModifierData_RO_BufferLookup,
                         m_IntResults = __instance.GetMemberValue<NativeArray<int>>("m_IntResults"),
-                        m_CountResults = __instance.GetMemberValue<NativeList<float2>>("m_CountResult"),
+                        m_Duration = __instance.GetMemberValue<NativeReference<float>>("m_DurationResult"),
                     };
                     IJobExtensions.Schedule(jobData, __instance.GetMemberValue<JobHandle>("Dependency")).Complete();
                 }
