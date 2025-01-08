@@ -51,6 +51,9 @@ public partial class ModifiedSystem : GameSystemBase
         [ReadOnly]
         public ComponentLookup<Game.Buildings.ServiceUpgrade> m_ServiceUpgradeData;
 
+        [ReadOnly]
+        public Entity m_TicketPricePolicy;
+
         public ComponentLookup<District> m_DistrictData;
 
         public ComponentLookup<Building> m_BuildingData;
@@ -93,12 +96,13 @@ public partial class ModifiedSystem : GameSystemBase
                     {
                         if (num < bufferData.Length)
                         {
-                            Policy value = bufferData[num];
-                            if (value.m_Policy == modify.m_Policy)
+                            Policy policy = bufferData[num];
+                            if (policy.m_Policy == modify.m_Policy)
                             {
                                 if ((modify.m_Flags & PolicyFlags.Active) == 0)
                                 {
-                                    if (!m_DistrictModifierRefreshData.m_PolicySliderData.HasComponent(value.m_Policy))
+                                    CheckFreeBusTicketEventTrigger(policy);
+                                    if (!m_DistrictModifierRefreshData.m_PolicySliderData.HasComponent(policy.m_Policy))
                                     {
                                         bufferData.RemoveAt(num);
                                         RefreshEffects(modify.m_Entity, modify.m_Policy, bufferData);
@@ -110,7 +114,7 @@ public partial class ModifiedSystem : GameSystemBase
                                         });
                                         break;
                                     }
-                                    if (m_DistrictModifierRefreshData.m_PolicySliderData[value.m_Policy].m_Default == value.m_Adjustment)
+                                    if (m_DistrictModifierRefreshData.m_PolicySliderData[policy.m_Policy].m_Default == policy.m_Adjustment)
                                     {
                                         bufferData.RemoveAt(num);
                                         RefreshEffects(modify.m_Entity, modify.m_Policy, bufferData);
@@ -123,9 +127,9 @@ public partial class ModifiedSystem : GameSystemBase
                                         break;
                                     }
                                 }
-                                value.m_Flags = modify.m_Flags;
-                                value.m_Adjustment = modify.m_Adjustment;
-                                bufferData[num] = value;
+                                policy.m_Flags = modify.m_Flags;
+                                policy.m_Adjustment = modify.m_Adjustment;
+                                bufferData[num] = policy;
                                 RefreshEffects(modify.m_Entity, modify.m_Policy, bufferData);
                                 break;
                             }
@@ -164,6 +168,21 @@ public partial class ModifiedSystem : GameSystemBase
                 {
                     m_CommandBuffer.AddComponent<Updated>(componentData3.m_Owner);
                 }
+            }
+        }
+
+        private void CheckFreeBusTicketEventTrigger(Policy policy)
+        {
+            if (m_TicketPricePolicy == policy.m_Policy)
+            {
+                m_TriggerBuffer.Enqueue(new TriggerAction
+                {
+                    m_TriggerType = TriggerType.FreePublicTransport,
+                    m_Value = 0f,
+                    m_TriggerPrefab = policy.m_Policy,
+                    m_SecondaryTarget = Entity.Null,
+                    m_PrimaryTarget = Entity.Null
+                });
             }
         }
 
@@ -329,6 +348,8 @@ public partial class ModifiedSystem : GameSystemBase
 
     private CityModifierUpdateSystem.CityModifierRefreshData m_CityModifierRefreshData;
 
+    private Entity m_TicketPricePolicy;
+
     private TypeHandle __TypeHandle;
 
     [Preserve]
@@ -340,6 +361,10 @@ public partial class ModifiedSystem : GameSystemBase
         m_BuildingModifierRefreshData = new BuildingModifierInitializeSystem.BuildingModifierRefreshData(this);
         m_RouteModifierRefreshData = new TransportPolicyAdjuster.RouteModifierInitializeSystem.RouteModifierRefreshData(this);
         m_CityModifierRefreshData = new CityModifierUpdateSystem.CityModifierRefreshData(this);
+        PrefabSystem orCreateSystemManaged = base.World.GetOrCreateSystemManaged<PrefabSystem>();
+        EntityQuery entityQuery = GetEntityQuery(ComponentType.ReadOnly<UITransportConfigurationData>());
+        UITransportConfigurationPrefab singletonPrefab = orCreateSystemManaged.GetSingletonPrefab<UITransportConfigurationPrefab>(entityQuery);
+        m_TicketPricePolicy = orCreateSystemManaged.GetEntity(singletonPrefab.m_TicketPricePolicy);
         m_EventQuery = GetEntityQuery(ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<Modify>());
         m_EffectProviderQuery = GetEntityQuery(ComponentType.ReadOnly<CityEffectProvider>(), ComponentType.Exclude<Deleted>(), ComponentType.Exclude<Destroyed>(), ComponentType.Exclude<Temp>());
         m_ModificationBarrier = base.World.GetOrCreateSystemManaged<ModificationBarrier4>();
@@ -392,7 +417,8 @@ public partial class ModifiedSystem : GameSystemBase
             m_CityModifiers = __TypeHandle.__Game_City_CityModifier_RW_BufferLookup,
             m_Policies = __TypeHandle.__Game_Policies_Policy_RW_BufferLookup,
             m_PolicyEventInfos = m_PolicyEventInfos.AsParallelWriter(),
-            m_CommandBuffer = m_ModificationBarrier.CreateCommandBuffer()
+            m_CommandBuffer = m_ModificationBarrier.CreateCommandBuffer(),
+            m_TicketPricePolicy = m_TicketPricePolicy,
         };
         JobHandle jobHandle = JobChunkExtensions.Schedule(jobData, m_EventQuery, JobHandle.CombineDependencies(base.Dependency, outJobHandle));
         effectProviderChunks.Dispose(jobHandle);
