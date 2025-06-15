@@ -1,15 +1,16 @@
 ﻿using HarmonyLib;
 
-namespace TransportPolicyAdjuster;
-
-[HarmonyPatch]
-public class DisableBaseModifiedSystem
+namespace TransportPolicyAdjuster
 {
-    [HarmonyPatch(typeof(Game.Policies.ModifiedSystem), nameof(OnUpdate))]
-    [HarmonyPrefix]
-    private static bool OnUpdate(ref Game.Policies.ModifiedSystem __instance)
+    [HarmonyPatch]
+    public class DisableBaseModifiedSystem
     {
-        __instance.Enabled = false;
-        return false;
+        [HarmonyPatch(typeof(Game.Policies.ModifiedSystem), nameof(OnUpdate))]
+        [HarmonyPrefix]
+        private static bool OnUpdate(ref Game.Policies.ModifiedSystem __instance)
+        {
+            __instance.Enabled = false;
+            return false;
+        }
     }
 }

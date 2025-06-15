@@ -10,6 +10,7 @@ using System;
 using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Entities.Internal;
 using Unity.Jobs;
 using Unity.Mathematics;
 
@@ -204,31 +205,14 @@ namespace TransportPolicyAdjuster
                 if (__instance.visible)
                 {
                     var __Game_Prefabs_RouteModifierData_RO_BufferLookup = typeHandle.GetMemberValue<BufferLookup<RouteModifierData>>("__Game_Prefabs_RouteModifierData_RO_BufferLookup");
-                    __Game_Prefabs_RouteModifierData_RO_BufferLookup.Update(ref __instance.CheckedStateRef);
-
                     var __Game_Routes_RouteModifier_RO_BufferLookup = typeHandle.GetMemberValue<BufferLookup<RouteModifier>>("__Game_Routes_RouteModifier_RO_BufferLookup");
-                    __Game_Routes_RouteModifier_RO_BufferLookup.Update(ref __instance.CheckedStateRef);
-
                     var __Game_Routes_RouteSegment_RO_BufferLookup = typeHandle.GetMemberValue<BufferLookup<RouteSegment>>("__Game_Routes_RouteSegment_RO_BufferLookup");
-                    __Game_Routes_RouteSegment_RO_BufferLookup.Update(ref __instance.CheckedStateRef);
-
                     var __Game_Routes_RouteWaypoint_RO_BufferLookup = typeHandle.GetMemberValue<BufferLookup<RouteWaypoint>>("__Game_Routes_RouteWaypoint_RO_BufferLookup");
-                    __Game_Routes_RouteWaypoint_RO_BufferLookup.Update(ref __instance.CheckedStateRef);
-
                     var __Game_Routes_RouteVehicle_RO_BufferLookup = typeHandle.GetMemberValue<BufferLookup<RouteVehicle>>("__Game_Routes_RouteVehicle_RO_BufferLookup");
-                    __Game_Routes_RouteVehicle_RO_BufferLookup.Update(ref __instance.CheckedStateRef);
-
                     var __Game_Pathfind_PathInformation_RO_ComponentLookup = typeHandle.GetMemberValue<ComponentLookup<PathInformation>>("__Game_Pathfind_PathInformation_RO_ComponentLookup");
-                    __Game_Pathfind_PathInformation_RO_ComponentLookup.Update(ref __instance.CheckedStateRef);
-
                     var __Game_Routes_VehicleTiming_RO_ComponentLookup = typeHandle.GetMemberValue<ComponentLookup<VehicleTiming>>("__Game_Routes_VehicleTiming_RO_ComponentLookup");
-                    __Game_Routes_VehicleTiming_RO_ComponentLookup.Update(ref __instance.CheckedStateRef);
-
                     var __Game_Prefabs_PolicySliderData_RO_ComponentLookup = typeHandle.GetMemberValue<ComponentLookup<PolicySliderData>>("__Game_Prefabs_PolicySliderData_RO_ComponentLookup");
-                    __Game_Prefabs_PolicySliderData_RO_ComponentLookup.Update(ref __instance.CheckedStateRef);
-
                     var __Game_Prefabs_TransportLineData_RO_ComponentLookup = typeHandle.GetMemberValue<ComponentLookup<TransportLineData>>("__Game_Prefabs_TransportLineData_RO_ComponentLookup");
-                    __Game_Prefabs_TransportLineData_RO_ComponentLookup.Update(ref __instance.CheckedStateRef);
 
                     CalculateVehicleCountJob jobData = new()
                     {
@@ -236,15 +220,15 @@ namespace TransportPolicyAdjuster
                         m_SelectedPrefab = __instance.GetMemberValue<Entity>("selectedPrefab"),
                         m_Policy = __instance.GetMemberValue<Entity>("m_VehicleCountPolicy"),
                         m_MaxVehicleCount = Mod.m_Setting.GetMaximumCount(__Game_Prefabs_TransportLineData_RO_ComponentLookup[__instance.GetMemberValue<Entity>("selectedPrefab")].m_TransportType),
-                        m_TransportLineDatas = __Game_Prefabs_TransportLineData_RO_ComponentLookup,
-                        m_PolicySliderDatas = __Game_Prefabs_PolicySliderData_RO_ComponentLookup,
-                        m_VehicleTimings = __Game_Routes_VehicleTiming_RO_ComponentLookup,
-                        m_PathInformations = __Game_Pathfind_PathInformation_RO_ComponentLookup,
-                        m_RouteVehicles = __Game_Routes_RouteVehicle_RO_BufferLookup,
-                        m_RouteWaypoints = __Game_Routes_RouteWaypoint_RO_BufferLookup,
-                        m_RouteSegments = __Game_Routes_RouteSegment_RO_BufferLookup,
-                        m_RouteModifiers = __Game_Routes_RouteModifier_RO_BufferLookup,
-                        m_RouteModifierDatas = __Game_Prefabs_RouteModifierData_RO_BufferLookup,
+                        m_TransportLineDatas = InternalCompilerInterface.GetComponentLookup(ref __Game_Prefabs_TransportLineData_RO_ComponentLookup, ref __instance.CheckedStateRef),
+                        m_PolicySliderDatas = InternalCompilerInterface.GetComponentLookup(ref __Game_Prefabs_PolicySliderData_RO_ComponentLookup, ref __instance.CheckedStateRef),
+                        m_VehicleTimings = InternalCompilerInterface.GetComponentLookup(ref __Game_Routes_VehicleTiming_RO_ComponentLookup, ref __instance.CheckedStateRef),
+                        m_PathInformations = InternalCompilerInterface.GetComponentLookup(ref __Game_Pathfind_PathInformation_RO_ComponentLookup, ref __instance.CheckedStateRef),
+                        m_RouteVehicles = InternalCompilerInterface.GetBufferLookup(ref __Game_Routes_RouteVehicle_RO_BufferLookup, ref __instance.CheckedStateRef),
+                        m_RouteWaypoints = InternalCompilerInterface.GetBufferLookup(ref __Game_Routes_RouteWaypoint_RO_BufferLookup, ref __instance.CheckedStateRef),
+                        m_RouteSegments = InternalCompilerInterface.GetBufferLookup(ref __Game_Routes_RouteSegment_RO_BufferLookup, ref __instance.CheckedStateRef),
+                        m_RouteModifiers = InternalCompilerInterface.GetBufferLookup(ref __Game_Routes_RouteModifier_RO_BufferLookup, ref __instance.CheckedStateRef),
+                        m_RouteModifierDatas = InternalCompilerInterface.GetBufferLookup(ref __Game_Prefabs_RouteModifierData_RO_BufferLookup, ref __instance.CheckedStateRef),
                         m_IntResults = __instance.GetMemberValue<NativeArray<int>>("m_IntResults"),
                         m_Duration = __instance.GetMemberValue<NativeReference<float>>("m_DurationResult"),
                     };

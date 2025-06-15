@@ -8,6 +8,7 @@ using Unity.Burst;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Entities.Internal;
 using Unity.Jobs;
 using Unity.Mathematics;
 
@@ -186,19 +187,16 @@ namespace TransportPolicyAdjuster
                 m_RouteModifierRefreshData.Update(__instance);
                 var typeHandle = __instance.GetMemberValue<object>("__TypeHandle");
                 var __Game_Routes_RouteModifier_RW_BufferTypeHandle = typeHandle.GetMemberValue<BufferTypeHandle<RouteModifier>>("__Game_Routes_RouteModifier_RW_BufferTypeHandle");
-                __Game_Routes_RouteModifier_RW_BufferTypeHandle.Update(ref __instance.CheckedStateRef);
                 var __Game_Routes_Route_RW_ComponentTypeHandle = typeHandle.GetMemberValue<ComponentTypeHandle<Route>>("__Game_Routes_Route_RW_ComponentTypeHandle");
-                __Game_Routes_Route_RW_ComponentTypeHandle.Update(ref __instance.CheckedStateRef);
                 var __Game_Policies_Policy_RO_BufferTypeHandle = typeHandle.GetMemberValue<BufferTypeHandle<Policy>>("__Game_Policies_Policy_RO_BufferTypeHandle");
-                __Game_Policies_Policy_RO_BufferTypeHandle.Update(ref __instance.CheckedStateRef);
-                InitializeRouteModifiersJob initializeRouteModifiersJob = new()
+
+                InitializeRouteModifiersJob jobData = new InitializeRouteModifiersJob
                 {
                     m_RouteModifierRefreshData = new RouteModifierRefreshData(m_RouteModifierRefreshData),
-                    m_PolicyType = __Game_Policies_Policy_RO_BufferTypeHandle,
-                    m_RouteType = __Game_Routes_Route_RW_ComponentTypeHandle,
-                    m_RouteModifierType = __Game_Routes_RouteModifier_RW_BufferTypeHandle
+                    m_PolicyType = InternalCompilerInterface.GetBufferTypeHandle(ref __Game_Policies_Policy_RO_BufferTypeHandle, ref __instance.CheckedStateRef),
+                    m_RouteType = InternalCompilerInterface.GetComponentTypeHandle(ref __Game_Routes_Route_RW_ComponentTypeHandle, ref __instance.CheckedStateRef),
+                    m_RouteModifierType = InternalCompilerInterface.GetBufferTypeHandle(ref __Game_Routes_RouteModifier_RW_BufferTypeHandle, ref __instance.CheckedStateRef)
                 };
-                InitializeRouteModifiersJob jobData = initializeRouteModifiersJob;
 
                 var dependency = __instance.GetMemberValue<JobHandle>("Dependency");
                 __instance.SetMemberValue("Dependency", JobChunkExtensions.ScheduleParallel(jobData, __instance.GetMemberValue<EntityQuery>("m_CreatedQuery"), dependency));

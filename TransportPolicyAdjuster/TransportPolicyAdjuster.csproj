@@ -3,7 +3,7 @@
 	<PropertyGroup>
 		<OutputType>Library</OutputType>
 		<TargetFramework>net472</TargetFramework>
-		<LangVersion>11.0</LangVersion>
+		<LangVersion>9.0</LangVersion>
 		<Nullable>Enable</Nullable>
 		<Configurations>Debug;Release</Configurations>
 
