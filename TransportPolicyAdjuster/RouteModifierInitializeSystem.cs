@@ -203,8 +203,7 @@ namespace TransportPolicyAdjuster
             }
             catch (Exception ex)
             {
-                var logger = LogManager.GetLogger(nameof(TransportPolicyAdjuster)).SetShowsErrorsInUI(true);
-                logger.Critical(ex, $"Something went wrong in the OnUpdate of RouteModifierInitializeSystem");
+                Mod.Logger.Critical(ex, $"Something went wrong in the OnUpdate of RouteModifierInitializeSystem");
             }
 
             return false;

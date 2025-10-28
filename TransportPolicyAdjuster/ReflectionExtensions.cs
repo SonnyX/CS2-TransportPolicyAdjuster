@@ -30,15 +30,13 @@ namespace TransportPolicyAdjuster
                     return (T)value;
                 }
 
-                var logger = LogManager.GetLogger(nameof(TransportPolicyAdjuster)).SetShowsErrorsInUI(true);
-                logger.Critical($"{nameof(ReflectionExtensions)}: Couldn't find member name: {memberName}!");
+                Mod.Logger.Critical($"{nameof(ReflectionExtensions)}: Couldn't find member name: {memberName}!");
 
                 throw new Exception($"{nameof(ReflectionExtensions)}: Couldn't find member name: {memberName}!");
             }
             catch(InvalidCastException ex)
             {
-                var logger = LogManager.GetLogger(nameof(TransportPolicyAdjuster)).SetShowsErrorsInUI(true);
-                logger.Critical(ex, $"Cannot cast {value?.GetType().FullName} to {typeof(T).GetType().FullName}");
+                Mod.Logger.Critical(ex, $"Cannot cast {value?.GetType().FullName} to {typeof(T).GetType().FullName}");
 
                 throw new Exception($"Cannot cast {value?.GetType().FullName} to {typeof(T).GetType().FullName}");
             }
@@ -67,8 +65,7 @@ namespace TransportPolicyAdjuster
             }
             else
             {
-                var logger = LogManager.GetLogger(nameof(TransportPolicyAdjuster)).SetShowsErrorsInUI(true);
-                logger.Critical($"Did not set {memberName} to {newValue} as the {memberName} is neither a Property or a Field...");
+                Mod.Logger.Critical($"Did not set {memberName} to {newValue} as the {memberName} is neither a Property or a Field...");
             }
 
             return oldValue;
@@ -108,8 +105,7 @@ namespace TransportPolicyAdjuster
                 return flds[0];
             }
 
-            var logger = LogManager.GetLogger(nameof(TransportPolicyAdjuster)).SetShowsErrorsInUI(true);
-            logger.Log(Level.Warn, $"{memberName}'s GetMemberInfo returned null", null);
+            Mod.Logger.Log(Level.Warn, $"{memberName}'s GetMemberInfo returned null", null);
 
             return null;
         }

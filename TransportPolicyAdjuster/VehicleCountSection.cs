@@ -153,7 +153,7 @@ namespace TransportPolicyAdjuster
                 var __Game_Prefabs_TransportLineData_RO_ComponentLookup = typeHandle.GetMemberValue<ComponentLookup<TransportLineData>>("__Game_Prefabs_TransportLineData_RO_ComponentLookup");
                 var defaultVehicleInterval = __Game_Prefabs_TransportLineData_RO_ComponentLookup[__instance.GetMemberValue<Entity>("selectedPrefab")].m_DefaultVehicleInterval;
 
-                Mod.log.Info($"newVehicleCount: {newVehicleCount}, stableDuration: {stableDuration}, defaultVehicleInterval: {defaultVehicleInterval}");
+                Mod.Logger.Info($"newVehicleCount: {newVehicleCount}, stableDuration: {stableDuration}, defaultVehicleInterval: {defaultVehicleInterval}");
 
                 float vehicleInterval = 100f / (stableDuration / (defaultVehicleInterval * newVehicleCount));
                 m_PoliciesUISystem.SetPolicy(selectedEntity, m_VehicleCountPolicy, active: true, vehicleInterval);
