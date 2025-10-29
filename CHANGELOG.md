@@ -1,4 +1,10 @@
-## 1.6.0 (2024-06-15)
+## 1.8.0 (2025-10-29
+Fixed mod for version 1.3.6f1
+
+## 1.7.0 (2025-10-28)
+Attempt to fix reported crash for version 1.3.6f1
+
+## 1.6.0 (2025-06-15)
 Fixed mod for version 1.3.3f1
 
 ## 1.5.0 (2025-01-08)

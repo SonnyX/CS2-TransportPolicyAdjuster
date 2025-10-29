@@ -17,3 +17,6 @@ This mod will be incompatible with other mods that modify/target:
  - `Game.Policies.ModifiedSystem`
  - `Game.Policies.RouteModifierInitializeSystem`
  - `Game.UI.InGame.VehicleCountSection`
+
+Known incompatible mods:
+ - [SmartTransportation](https://mods.paradoxplaza.com/mods/90264/Windows/)

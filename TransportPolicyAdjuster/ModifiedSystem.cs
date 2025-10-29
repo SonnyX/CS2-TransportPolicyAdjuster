@@ -4,6 +4,7 @@ using Game.Areas;
 using Game.Buildings;
 using Game.City;
 using Game.Common;
+using Game.Pathfind;
 using Game.Policies;
 using Game.Prefabs;
 using Game.PSI;
@@ -51,6 +52,9 @@ namespace TransportPolicyAdjuster
 
             [ReadOnly]
             public ComponentLookup<Game.Buildings.ServiceUpgrade> m_ServiceUpgradeData;
+
+            [ReadOnly]
+            public BufferLookup<CoverageElement> m_CoverageElements;
 
             [ReadOnly]
             public Entity m_TicketPricePolicy;
@@ -168,6 +172,10 @@ namespace TransportPolicyAdjuster
                     if (m_ServiceUpgradeData.HasComponent(modify.m_Entity) && m_OwnerData.TryGetComponent(modify.m_Entity, out var componentData3))
                     {
                         m_CommandBuffer.AddComponent<Updated>(componentData3.m_Owner);
+                        if (m_CoverageElements.HasBuffer(modify.m_Entity))
+                        {
+                            m_CommandBuffer.AddComponent<Updated>(modify.m_Entity);
+                        }
                     }
                 }
             }
@@ -292,6 +300,9 @@ namespace TransportPolicyAdjuster
             [ReadOnly]
             public ComponentLookup<Game.Buildings.ServiceUpgrade> __Game_Buildings_ServiceUpgrade_RO_ComponentLookup;
 
+            [ReadOnly]
+            public BufferLookup<CoverageElement> __Game_Pathfind_CoverageElement_RO_BufferLookup;
+
             public ComponentLookup<District> __Game_Areas_District_RW_ComponentLookup;
 
             public ComponentLookup<Building> __Game_Buildings_Building_RW_ComponentLookup;
@@ -318,6 +329,7 @@ namespace TransportPolicyAdjuster
                 __Game_Policies_Modify_RO_ComponentTypeHandle = state.GetComponentTypeHandle<Modify>(isReadOnly: true);
                 __Game_Common_Owner_RO_ComponentLookup = state.GetComponentLookup<Owner>(isReadOnly: true);
                 __Game_Buildings_ServiceUpgrade_RO_ComponentLookup = state.GetComponentLookup<Game.Buildings.ServiceUpgrade>(isReadOnly: true);
+                __Game_Pathfind_CoverageElement_RO_BufferLookup = state.GetBufferLookup<CoverageElement>(isReadOnly: true);
                 __Game_Areas_District_RW_ComponentLookup = state.GetComponentLookup<District>();
                 __Game_Buildings_Building_RW_ComponentLookup = state.GetComponentLookup<Building>();
                 __Game_Buildings_Extension_RW_ComponentLookup = state.GetComponentLookup<Extension>();
@@ -393,6 +405,7 @@ namespace TransportPolicyAdjuster
                 m_ModifyType = InternalCompilerInterface.GetComponentTypeHandle(ref __TypeHandle.__Game_Policies_Modify_RO_ComponentTypeHandle, ref base.CheckedStateRef),
                 m_OwnerData = InternalCompilerInterface.GetComponentLookup(ref __TypeHandle.__Game_Common_Owner_RO_ComponentLookup, ref base.CheckedStateRef),
                 m_ServiceUpgradeData = InternalCompilerInterface.GetComponentLookup(ref __TypeHandle.__Game_Buildings_ServiceUpgrade_RO_ComponentLookup, ref base.CheckedStateRef),
+                m_CoverageElements = InternalCompilerInterface.GetBufferLookup(ref __TypeHandle.__Game_Pathfind_CoverageElement_RO_BufferLookup, ref base.CheckedStateRef),
                 m_TriggerBuffer = nativeQueue.AsParallelWriter(),
                 m_DistrictData = InternalCompilerInterface.GetComponentLookup(ref __TypeHandle.__Game_Areas_District_RW_ComponentLookup, ref base.CheckedStateRef),
                 m_BuildingData = InternalCompilerInterface.GetComponentLookup(ref __TypeHandle.__Game_Buildings_Building_RW_ComponentLookup, ref base.CheckedStateRef),

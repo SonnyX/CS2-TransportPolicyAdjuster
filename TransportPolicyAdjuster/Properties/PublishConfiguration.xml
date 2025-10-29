@@ -26,14 +26,14 @@ Whether you're a seasoned city planner looking for more control or a casual game
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.7" />
+	<ModVersion Value="1.8" />
 	<!--Recommended version of the base game to use the mod-->
-	<GameVersion Value="1.3.*" />
+	<GameVersion Value="1.3.6f1" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog>
-Attempt to fix reported crash for version 1.3.6f1
+Fixed mod for version 1.3.6f1
 	</ChangeLog>
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon-->
 	<ExternalLink Type="github" Url="https://github.com/SonnyX/CS2-TransportPolicyAdjuster" />
