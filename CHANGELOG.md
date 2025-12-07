@@ -1,3 +1,6 @@
+## 1.10.0 (2025-12-7)
+Updated mod for version 1.5.2f1
+
 ## 1.9.0 (2025-11-21)
 Updated mod for version 1.4.2f1
 

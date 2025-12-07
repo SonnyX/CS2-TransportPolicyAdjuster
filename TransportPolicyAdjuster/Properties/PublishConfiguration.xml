@@ -14,6 +14,8 @@ Gone are the days of being constrained by arbitrary rules determining vehicle al
 TransportPolicyAdjuster doesn't clutter your game with additional UI elements or complicated menus. Instead, it provides a streamlined settings page where you can easily adjust the maximum allowable number of vehicles for each transportation type. Want to flood your city streets with buses or fill your skies with airplanes? With this mod, the power to customize your transportation networks is now at your fingertips.
 
 Whether you're a seasoned city planner looking for more control or a casual gamer seeking a more flexible gameplay experience, TransportPolicyAdjuster offers a simple yet powerful solution. Take charge of your transportation infrastructure like never before and watch your virtual world thrive under your expert management.
+
+**Note:** We are looking for a thumbnail for the mod. If you are a graphic designer and would like to contribute, please reach out on the mod's GitHub page.
 	</LongDescription>
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/Thumbnail.png" />
@@ -26,14 +28,14 @@ Whether you're a seasoned city planner looking for more control or a casual game
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.9" />
+	<ModVersion Value="1.10" />
 	<!--Recommended version of the base game to use the mod-->
-	<GameVersion Value="1.4.2*" />
+	<GameVersion Value="1.5.2*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog>
-Updated mod for version 1.4.2f1
+Updated mod for version 1.5.2f1
 	</ChangeLog>
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon-->
 	<ExternalLink Type="github" Url="https://github.com/SonnyX/CS2-TransportPolicyAdjuster" />
