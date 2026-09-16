@@ -388,8 +388,7 @@ namespace TransportPolicyAdjuster
         [Preserve]
         protected override void OnUpdate()
         {
-            JobHandle outJobHandle;
-            NativeList<ArchetypeChunk> effectProviderChunks = m_EffectProviderQuery.ToArchetypeChunkListAsync(Allocator.TempJob, out outJobHandle);
+            NativeList<ArchetypeChunk> effectProviderChunks = m_EffectProviderQuery.ToArchetypeChunkListAsync(Allocator.TempJob, out var outJobHandle);
             m_DistrictModifierRefreshData.Update(this);
             m_BuildingModifierRefreshData.Update(this);
             m_RouteModifierRefreshData.Update(this);
@@ -445,9 +444,16 @@ namespace TransportPolicyAdjuster
             m_PolicyEventInfos.Dispose();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void __AssignQueries(ref SystemState state)
+        {
+            new EntityQueryBuilder(Allocator.Temp).Dispose();
+        }
+
         protected override void OnCreateForCompiler()
         {
             base.OnCreateForCompiler();
+            __AssignQueries(ref base.CheckedStateRef);
             __TypeHandle.__AssignHandles(ref base.CheckedStateRef);
         }
 
